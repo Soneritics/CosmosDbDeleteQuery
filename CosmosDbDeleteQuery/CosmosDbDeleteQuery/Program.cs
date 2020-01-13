@@ -1,13 +1,24 @@
 ﻿using System;
 using System.Text;
-using System.Threading.Tasks;
 using CosmosDbDeleteQuery.Connection;
 
 namespace CosmosDbDeleteQuery
 {
+    /// <summary>
+    /// Dev tool to delete documents from Cosmos DB with an SQL query, similar to a 'DELETE FROM ..' SQL-query.
+    /// Use the Microsoft Azure Storage Explorer to write a query, then paste the WHERE-clause in this app.
+    /// You are specifically asked for the credentials and endpoint, so making a mistake is a little harder :-)
+    ///
+    /// The tool has little exception handling. Only where necessary. When too many documents are deleted at once, you might
+    /// hit the throttling limits of Cosmos. In that case, just run the same query twice ;-)
+    /// </summary>
     class Program
     {
-        static async Task Main(string[] args)
+        /// <summary>
+        /// Where the magic happe.. err.. begins.
+        /// </summary>
+        /// <param name="args">The arguments.</param>
+        static void Main(string[] args)
         {
             Console.WriteLine("Welcome to this Cosmos Db tool, that helps you execute delete queries.");
             Console.WriteLine("WARNING: This tool will actually delete, not soft-delete.");
@@ -29,13 +40,18 @@ namespace CosmosDbDeleteQuery
                     foreach (var documentId in client.Delete(query))
                         Console.WriteLine($"Deleted: {documentId}");
 
-                    Console.WriteLine("All done.");
+                    Console.WriteLine("All done.\r\n");
                 }
 
                 proceed = GetBoolVal("Execute another query", false);
             }
         }
 
+        #region User Input
+        /// <summary>
+        /// Gets the data connection client, used to query Cosmos.
+        /// </summary>
+        /// <returns></returns>
         private static DataConnectionClient GetDataConnectionClient()
         {
             Console.Clear();
@@ -57,6 +73,10 @@ namespace CosmosDbDeleteQuery
             );
         }
 
+        /// <summary>
+        /// Gets the where clause.
+        /// </summary>
+        /// <returns></returns>
         private static string GetWhereClause()
         {
             Console.Clear();
@@ -80,7 +100,15 @@ namespace CosmosDbDeleteQuery
 
             return result;
         }
+        #endregion
 
+        #region User input helpers
+        /// <summary>
+        /// Gets a string value from user input.
+        /// </summary>
+        /// <param name="label">The label.</param>
+        /// <param name="defaultValue">The default value.</param>
+        /// <returns></returns>
         private static string GetStringVal(string label, string defaultValue = "")
         {
             Console.Write($"{label}: ({defaultValue}) ");
@@ -89,6 +117,12 @@ namespace CosmosDbDeleteQuery
             return string.IsNullOrEmpty(val) ? defaultValue : val;
         }
 
+        /// <summary>
+        /// Gets a bool value from user input.
+        /// </summary>
+        /// <param name="label">The label.</param>
+        /// <param name="defaultValue">if set to <c>true</c> [default value].</param>
+        /// <returns></returns>
         private static bool GetBoolVal(string label, bool defaultValue)
         {
             Console.Write($"{label}: y/n (" + (defaultValue ? "y" : "n") + ") ");
@@ -107,5 +141,6 @@ namespace CosmosDbDeleteQuery
             Console.WriteLine("Invalid value. Typ y or n. Try again.");
             return GetBoolVal(label, defaultValue);
         }
+        #endregion
     }
 }
