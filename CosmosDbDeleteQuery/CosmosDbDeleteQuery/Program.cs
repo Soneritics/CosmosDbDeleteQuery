@@ -25,7 +25,12 @@ namespace CosmosDbDeleteQuery
                 Console.WriteLine($"Your query has {count} result(s).");
 
                 if (count != 0 && GetBoolVal("Are you completely sure you want to delete these documents", false))
-                    Console.WriteLine("Deleted");
+                {
+                    foreach (var documentId in client.Delete(query))
+                        Console.WriteLine($"Deleted: {documentId}");
+
+                    Console.WriteLine("All done.");
+                }
 
                 proceed = GetBoolVal("Execute another query", false);
             }
