@@ -69,7 +69,8 @@ namespace CosmosDbDeleteQuery.Connection
 
                 try
                 {
-                    
+                    var docUri = UriFactory.CreateDocumentUri(_client.DatabaseId, _client.CollectionId, docId);
+                    _client.Client.DeleteDocumentAsync(docUri, _client.RequestOptions).Wait();
                 }
                 catch (Exception e)
                 {
