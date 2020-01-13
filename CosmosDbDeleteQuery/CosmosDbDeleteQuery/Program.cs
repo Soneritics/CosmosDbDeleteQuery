@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Text;
+using System.Threading.Tasks;
 using CosmosDbDeleteQuery.Connection;
 
 namespace CosmosDbDeleteQuery
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             Console.WriteLine("Welcome to this Cosmos Db tool, that helps you execute delete queries.");
             Console.WriteLine("WARNING: This tool will actually delete, not soft-delete.");
@@ -14,16 +15,16 @@ namespace CosmosDbDeleteQuery
             if (!GetBoolVal("Are you sure you want to proceed?", true))
                 return;
 
-            var dataConnectionClient = GetDataConnectionClient();
+            var client = new DataClient(GetDataConnectionClient());
             var proceed = true;
             while (proceed)
             {
                 var query = GetWhereClause();
 
-                var count = 10;
+                var count = client.GetCount(query);
                 Console.WriteLine($"Your query has {count} result(s).");
 
-                if (count > 0 && GetBoolVal("Are you completely sure you want to delete these documents", false))
+                if (count != 0 && GetBoolVal("Are you completely sure you want to delete these documents", false))
                     Console.WriteLine("Deleted");
 
                 proceed = GetBoolVal("Execute another query", false);

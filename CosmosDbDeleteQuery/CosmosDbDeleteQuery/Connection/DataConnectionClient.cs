@@ -12,8 +12,8 @@ namespace CosmosDbDeleteQuery.Connection
         public DocumentClient Client { get; }
         public string DatabaseId { get; }
         public string CollectionId { get; }
-        public bool EnableCrossPartitionQuery { get; }
-        public PartitionKey PartitionKey { get; }
+        public bool EnableCrossPartitionQuery { get; } = false;
+        public RequestOptions RequestOptions { get; } = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DataConnectionClient"/> class.
@@ -28,13 +28,17 @@ namespace CosmosDbDeleteQuery.Connection
         {
             DatabaseId = databaseId;
             CollectionId = collectionId;
-            EnableCrossPartitionQuery = enableCrossPartitionQuery;
-            PartitionKey = new PartitionKey(partitionKey);
             Client = new DocumentClient(
                 serviceEndpoint: new Uri(endpoint),
                 authKeyOrResourceToken: key,
                 connectionPolicy: GetConnectionPolicy()
             );
+
+            if (enableCrossPartitionQuery)
+            {
+                EnableCrossPartitionQuery = true;
+                RequestOptions = new RequestOptions() { PartitionKey = new PartitionKey(partitionKey) };
+            }
         }
 
         /// <summary>
