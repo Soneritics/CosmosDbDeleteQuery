@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 
 namespace CosmosDbDeleteQuery.Connection
@@ -14,9 +15,10 @@ namespace CosmosDbDeleteQuery.Connection
         /// <summary>
         /// ID DTO to cast results of the Cosmos query
         /// </summary>
-        private class IdDto
+        private class IdPartitionKeyDto
         {
-            public string id { get; set; }
+            public string Id { get; set; }
+            public string PartitionKey { get; set; }
         }
 
         /// <summary>
@@ -83,18 +85,18 @@ namespace CosmosDbDeleteQuery.Connection
         /// <returns></returns>
         public IEnumerable<string> Delete(string whereClause)
         {
-            var query = $"SELECT TOP 500 c.id FROM c WHERE {whereClause}";
+            var query = $"SELECT TOP 500 c.id AS Id, c.{_client.PartitionKey} AS PartitionKey FROM c WHERE {whereClause}";
             var uri = UriFactory.CreateDocumentCollectionUri(_client.DatabaseId, _client.CollectionId);
             var feedOptions = _client.EnableCrossPartitionQuery ? new FeedOptions {EnableCrossPartitionQuery = true} : null;
             
             var retries = 0;
             do
             {
-                List<IdDto> result = null;
+                List<IdPartitionKeyDto> result = null;
 
                 try
                 {
-                    result = _client.Client.CreateDocumentQuery<IdDto>(uri, query, feedOptions).AsEnumerable().ToList();
+                    result = _client.Client.CreateDocumentQuery<IdPartitionKeyDto>(uri, query, feedOptions).AsEnumerable().ToList();
                 }
                 catch (Exception e)
                 {
@@ -113,13 +115,21 @@ namespace CosmosDbDeleteQuery.Connection
                     retries = 0;
                     foreach (var doc in result)
                     {
-                        var docId = doc.id;
+                        var docId = doc.Id;
                         var noException = true;
 
                         try
                         {
+                            RequestOptions requestOptions = null;
+
+                            if (_client.EnableCrossPartitionQuery)
+                                requestOptions = new RequestOptions()
+                                {
+                                    PartitionKey = new PartitionKey(doc.PartitionKey)
+                                };
+
                             var docUri = UriFactory.CreateDocumentUri(_client.DatabaseId, _client.CollectionId, docId);
-                            _client.Client.DeleteDocumentAsync(docUri, _client.RequestOptions).Wait();
+                            _client.Client.DeleteDocumentAsync(docUri, requestOptions).Wait();
                         }
                         catch (Exception e)
                         {
