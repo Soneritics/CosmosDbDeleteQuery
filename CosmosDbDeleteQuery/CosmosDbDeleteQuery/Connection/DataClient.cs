@@ -69,13 +69,22 @@ namespace CosmosDbDeleteQuery.Connection
         /// <returns>
         ///   <c>true</c> if the specified where clause has results; otherwise, <c>false</c>.
         /// </returns>
-        public bool HasResults(string whereClause)
+        public bool HasResults(string whereClause, int retries = 10)
         {
-            var query = $"SELECT TOP 1 c.id FROM c WHERE {whereClause}";
-            var uri = UriFactory.CreateDocumentCollectionUri(_client.DatabaseId, _client.CollectionId);
-            var feedOptions = _client.EnableCrossPartitionQuery ? new FeedOptions { EnableCrossPartitionQuery = true } : null;
+            try
+            {
+                var query = $"SELECT TOP 1 c.id FROM c WHERE {whereClause}";
+                var uri = UriFactory.CreateDocumentCollectionUri(_client.DatabaseId, _client.CollectionId);
+                var feedOptions = _client.EnableCrossPartitionQuery ? new FeedOptions { EnableCrossPartitionQuery = true } : null;
 
-            return _client.Client.CreateDocumentQuery(uri, query, feedOptions).AsEnumerable().Any();
+                return _client.Client.CreateDocumentQuery(uri, query, feedOptions).AsEnumerable().Any();
+            }
+            catch
+            {
+                retries--;
+                Task.Delay(1000).GetAwaiter().GetResult();
+                return HasResults(whereClause, retries);
+            }
         }
 
         /// <summary>
