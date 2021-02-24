@@ -112,7 +112,8 @@ namespace CosmosDbDeleteQuery
         /// <returns></returns>
         private static string GetStringVal(string label, string defaultValue = "")
         {
-            Console.Write($"{label}: ({defaultValue}) ");
+            var def = string.IsNullOrEmpty(defaultValue) ? string.Empty : $"({defaultValue}) ";
+            Console.Write($"{label}: {def}");
             var val = Console.ReadLine();
 
             return string.IsNullOrEmpty(val) ? defaultValue : val;
